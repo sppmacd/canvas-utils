@@ -128,7 +128,7 @@
     const etBody = document.createElement("template");
     etBody.innerHTML = `
         <section>
-            <button>SELECT IMAGE</button>
+            <button>Add overlay</button>
             <div id="overlay-list">
             </div>
         </section>`;
