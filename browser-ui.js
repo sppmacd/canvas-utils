@@ -10,12 +10,14 @@
     const etOverlayElement = document.createElement("template")
     etOverlayElement.innerHTML = `
         <div>
-            <span>name</span>
-            <button>Remove</button>
-            <button>Change transform</button>
-            <button>Hide</button>
-        </div>
-    `;
+            <img></img>
+            <span>image name</span>
+            <div>
+                <button>Transform</button>
+                <button>Hide</button>
+                <button>X</button>
+            </div>
+        </div>`;
 
     function addOverlay(file) {
         var reader = new FileReader();
@@ -36,16 +38,15 @@
 
             let eOverlayElement = etOverlayElement.content.firstElementChild.cloneNode(true);
             console.log(eOverlayElement);
-            eOverlayElement.querySelector("span").innerText = file.name;
+            eOverlayElement.querySelector("img").src = reader.result;
+            let span = eOverlayElement.querySelector("span");
+            span.title = file.name;
+            span.innerText = file.name;
             eOverlayElement.querySelector("button:nth-of-type(1)").onclick = function () {
-                eCanvasContainer.removeChild(img);
-                eOverlayList.removeChild(eOverlayElement);
-            }
-            eOverlayElement.querySelector("button:nth-of-type(2)").onclick = function () {
                 const transform = prompt(`transform for ${file.name}:`);
                 img.style.transform = `scale(5) ${transform} scale(0.5)`;
             }
-            eOverlayElement.querySelector("button:nth-of-type(3)").onclick = function () {
+            eOverlayElement.querySelector("button:nth-of-type(2)").onclick = function () {
                 console.log(img.style.display);
                 if (img.style.display == "") {
                     img.style.display = "none";
@@ -56,6 +57,10 @@
                     this.innerText = "Hide";
                 }
             }
+            eOverlayElement.querySelector("button:nth-of-type(3)").onclick = function () {
+                eCanvasContainer.removeChild(img);
+                eOverlayList.removeChild(eOverlayElement);
+            }
             eOverlayList.appendChild(eOverlayElement);
         };
         reader.onerror = function (error) {
@@ -63,17 +68,73 @@
         };
     }
 
-    let eUi = document.createElement("div");
-    eUi.classList.add("x-canvas-utils");
-    eUi.style.position = "absolute";
-    eUi.style.right = "10px";
-    eUi.style.top = "10px";
-    eUi.style.backgroundColor = "white";
+    let eRoot = document.createElement("div");
+    eRoot.classList.add("x-canvas-utils");
+    eRoot.style.position = "absolute";
+    eRoot.style.right = "10px";
+    eRoot.style.top = "10px";
+    eRoot.style.width = "420px";
 
-    let eSelectImageButton = document.createElement("button");
-    eSelectImageButton.innerHTML = "SELECT IMAGE";
-    eSelectImageButton.style.width = "100%";
-    eSelectImageButton.onclick = () => {
+    let eUi = eRoot.attachShadow({ mode: "open" });
+
+    let eStyle = document.createElement("style");
+    eStyle.innerHTML = `
+        section {
+            background-color: #eeeeff;
+            display: flex;
+            flex-direction: column;
+            padding: 5px 10px;
+            width: 400px;
+        }
+
+        button {
+            margin: 5px;
+        }
+
+        span:nth-of-type(1) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 40%;
+        }
+
+        #overlay-list>div {
+            align-items: center;
+            border: 1px solid black;
+            display: flex;
+            height: 30px;
+            padding: 2px;
+            margin: 5px 0;
+        }
+
+        #overlay-list>div>img {
+            height: 90%;
+            margin: 0 5px;
+        }
+
+        #overlay-list>div>span {
+            cursor: help;
+        }
+
+        #overlay-list>div>div {
+            display: flex;
+            width: 60%;
+        }
+
+        #overlay-list>div>div>* {
+            flex: 1 auto;
+        }`;
+    eUi.appendChild(eStyle);
+
+    const etBody = document.createElement("template");
+    etBody.innerHTML = `
+        <section>
+            <button>SELECT IMAGE</button>
+            <div id="overlay-list">
+            </div>
+        </section>`;
+
+    let eBody = etBody.content.cloneNode(true);
+    eBody.querySelector("button").onclick = () => {
         let fileInput = document.createElement("input");
         fileInput.type = "file";
         fileInput.multiple = true;
@@ -83,10 +144,9 @@
         });
         fileInput.click();
     };
-    eUi.appendChild(eSelectImageButton);
 
-    let eOverlayList = document.createElement("div");
-    eUi.appendChild(eOverlayList);
+    let eOverlayList = eBody.querySelector("#overlay-list");
 
-    document.body.appendChild(eUi);
+    eUi.appendChild(eBody);
+    document.body.appendChild(eRoot);
 }
