@@ -1,11 +1,43 @@
 // pixel.vkoskiv.com template overlay
 {
     // cleanup previous instance of this script to allow hot reload
-    for (const e of document.getElementsByClassName("x-canvas-utils"))
-        e.remove();
+    for (const e of document.getElementsByClassName("x-canvas-utils")) {
+        e.parentNode.removeChild(e);
+    }
 
     // remove border from canvas because it breaks coordinates
     document.querySelector("canvas").style.border = "none";
+
+    // hook into WebSocket send function to get WebSocket instance (for status updates)
+    {
+        let tilesPlaced = 0;
+
+        function updateStatus() {
+            eStatus.innerText = `Tiles placed: ${tilesPlaced}`;
+        }
+
+        function onSend(msgJson) {
+            console.log(msgJson);
+            if (msgJson.requestType == "postTile") {
+                console.log("tile placed");
+                tilesPlaced++;
+                updateStatus();
+            }
+        }
+        function setupWebsocketHooks(websocket) {
+            console.info("setupWebsocketHooks TODO");
+        }
+
+        const _WebSocket_send = WebSocket.prototype.send;
+        WebSocket.prototype.send = function (...args) {
+            setupWebsocketHooks(this);
+            console.log("SEND: ", args);
+            argsJSON = JSON.parse(args[0]);
+            onSend(argsJSON);
+            _WebSocket_send.call(this, ...args);
+        }
+    }
+
 
     const etOverlayElement = document.createElement("template")
     etOverlayElement.innerHTML = `
@@ -71,9 +103,10 @@
     let eRoot = document.createElement("div");
     eRoot.classList.add("x-canvas-utils");
     eRoot.style.position = "absolute";
-    eRoot.style.right = "10px";
-    eRoot.style.top = "10px";
+    eRoot.style.right = "0";
+    eRoot.style.top = "0";
     eRoot.style.width = "420px";
+    eRoot.style.height = "100%";
 
     let eUi = eRoot.attachShadow({ mode: "open" });
 
@@ -82,13 +115,30 @@
         section {
             background-color: #eeeeff;
             display: flex;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: calc(100% - 50.8px);
             flex-direction: column;
-            padding: 5px 10px;
-            width: 400px;
+            width: 100%;
+        }
+
+        section>button {
+            margin-bottom: 0;
+            max-height: 30px;
         }
 
         button {
             margin: 5px;
+        }
+
+        section> :first-child {
+            margin-top: 10px;
+        }
+
+        section>* {
+            flex: 1 auto;
+            margin: 5px 10px;
         }
 
         span:nth-of-type(1) {
@@ -101,9 +151,13 @@
             align-items: center;
             border: 1px solid black;
             display: flex;
-            height: 30px;
+            height: 50px;
             padding: 2px;
             margin: 5px 0;
+        }
+
+        #overlay-list {
+            overflow: auto;
         }
 
         #overlay-list>div>img {
@@ -122,6 +176,14 @@
 
         #overlay-list>div>div>* {
             flex: 1 auto;
+        }
+
+        #status {
+            background-color: #ddddee;
+            margin: 0px;
+            max-height: 24px;
+            min-height: 24px;
+            padding: 5px;
         }`;
     eUi.appendChild(eStyle);
 
@@ -130,6 +192,8 @@
         <section>
             <button>Add overlay</button>
             <div id="overlay-list">
+            </div>
+            <div id="status">
             </div>
         </section>`;
 
@@ -146,6 +210,7 @@
     };
 
     let eOverlayList = eBody.querySelector("#overlay-list");
+    let eStatus = eBody.querySelector("#status");
 
     eUi.appendChild(eBody);
     document.body.appendChild(eRoot);
