@@ -176,6 +176,7 @@
         #overlay-list>div>img {
             height: 90%;
             margin: 0 5px;
+            width: 45px;
         }
 
         #overlay-list>div>span {
