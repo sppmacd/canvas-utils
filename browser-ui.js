@@ -11,21 +11,34 @@
     // hook into WebSocket send function to get WebSocket instance (for status updates)
     {
         let tilesPlaced = 0;
+        let tilesReceived = 0;
 
         function updateStatus() {
-            eStatus.innerText = `Tiles placed: ${tilesPlaced}`;
+            eStatus.innerText = `Tiles placed: ${tilesPlaced}, received: ${tilesReceived}`;
         }
 
         function onSend(msgJson) {
             console.log(msgJson);
             if (msgJson.requestType == "postTile") {
-                console.log("tile placed");
                 tilesPlaced++;
                 updateStatus();
             }
         }
+        function onReceive(msgJson) {
+            console.log(msgJson);
+            if (msgJson[0].responseType == "tileUpdate") {
+                tilesReceived++;
+                updateStatus();
+            }
+        }
         function setupWebsocketHooks(websocket) {
-            console.info("setupWebsocketHooks TODO");
+            if (websocket.xHooked)
+                return;
+            websocket.xHooked = true;
+            websocket.addEventListener("message", function (msg) {
+                console.log(msg);
+                onReceive(JSON.parse(msg.data));
+            });
         }
 
         const _WebSocket_send = WebSocket.prototype.send;
